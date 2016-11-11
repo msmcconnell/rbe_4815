@@ -18,6 +18,7 @@ public class RBE_4815_Final_Project {
     public static void main(String[] args) {
        MainUI main_ui = new MainUI();
        main_ui.setVisible(true);
+       //Trying to figure out how to draw
        JPanel canvasJPanel = main_ui.getCanvasJPanel();
        Graphics canvasGraphic = canvasJPanel.getGraphics();
        canvasGraphic.drawLine(40, 40, 100, 100);
