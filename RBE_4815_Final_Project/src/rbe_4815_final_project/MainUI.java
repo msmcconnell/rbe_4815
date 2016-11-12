@@ -28,7 +28,7 @@ public class MainUI extends javax.swing.JFrame {
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
-        canvas_jPanel = new javax.swing.JPanel();
+        canvas_PaintJPanel = new rbe_4815_final_project.PaintJPanel();
         menu_jPanel = new javax.swing.JPanel();
         new_path_jButton = new javax.swing.JButton();
         save_path_jButton = new javax.swing.JButton();
@@ -46,18 +46,18 @@ public class MainUI extends javax.swing.JFrame {
         setSize(new java.awt.Dimension(1280, 720));
         getContentPane().setLayout(new java.awt.GridBagLayout());
 
-        canvas_jPanel.setBackground(new java.awt.Color(255, 255, 255));
-        canvas_jPanel.setPreferredSize(new java.awt.Dimension(800, 400));
+        canvas_PaintJPanel.setBackground(new java.awt.Color(255, 255, 255));
+        canvas_PaintJPanel.setPreferredSize(new java.awt.Dimension(1000, 1000));
 
-        javax.swing.GroupLayout canvas_jPanelLayout = new javax.swing.GroupLayout(canvas_jPanel);
-        canvas_jPanel.setLayout(canvas_jPanelLayout);
-        canvas_jPanelLayout.setHorizontalGroup(
-            canvas_jPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 583, Short.MAX_VALUE)
+        javax.swing.GroupLayout canvas_PaintJPanelLayout = new javax.swing.GroupLayout(canvas_PaintJPanel);
+        canvas_PaintJPanel.setLayout(canvas_PaintJPanelLayout);
+        canvas_PaintJPanelLayout.setHorizontalGroup(
+            canvas_PaintJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
-        canvas_jPanelLayout.setVerticalGroup(
-            canvas_jPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 356, Short.MAX_VALUE)
+        canvas_PaintJPanelLayout.setVerticalGroup(
+            canvas_PaintJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -69,7 +69,7 @@ public class MainUI extends javax.swing.JFrame {
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 60.0;
         gridBagConstraints.insets = new java.awt.Insets(20, 20, 10, 20);
-        getContentPane().add(canvas_jPanel, gridBagConstraints);
+        getContentPane().add(canvas_PaintJPanel, gridBagConstraints);
 
         menu_jPanel.setBackground(new java.awt.Color(51, 51, 51));
         menu_jPanel.setLayout(new java.awt.GridBagLayout());
@@ -267,12 +267,12 @@ public class MainUI extends javax.swing.JFrame {
      * Function to access the drawing panel
      * @return javax.swing.JPanel The jPanel canvas used for drawing on
      */
-    public javax.swing.JPanel getCanvasJPanel(){
-        return this.canvas_jPanel;
+    public javax.swing.JPanel getCanvasPaintJPanel(){
+        return this.canvas_PaintJPanel;
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel canvas_jPanel;
+    private rbe_4815_final_project.PaintJPanel canvas_PaintJPanel;
     private javax.swing.JButton connect_jButton;
     private javax.swing.JButton load_path_jButton;
     private javax.swing.JLabel menu_jLabel;
