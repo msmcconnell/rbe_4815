@@ -69,7 +69,7 @@ public class PaintJPanel extends javax.swing.JPanel
 
     private Graphics graphicsForDrawing;  // A graphics context for the panel
                                 // that is used to draw the user's curve.
-    private static final int DOMINOE_DISTANCE = 50;
+    private static final int DOMINOE_DISTANCE = 10;
     
     private static final int AVERAGING_SIZE = 10;
     
@@ -177,12 +177,10 @@ public class PaintJPanel extends javax.swing.JPanel
            movingSumX += x;
            movingSumY += y;
            Point averagedPoint = new Point(movingSumX / AVERAGING_SIZE, movingSumY / AVERAGING_SIZE);//computeAverage(prevPointQueue);
-           prevPointQueue.add(averagedPoint);
            x = averagedPoint.x;
            y = averagedPoint.y;
        }
        else {
-           prevPointQueue.push(new Point(x,y));
            movingSumX += x;
            movingSumY += y;
        }
@@ -190,22 +188,22 @@ public class PaintJPanel extends javax.swing.JPanel
        graphicsForDrawing.setColor(Color.BLUE);
        graphicsForDrawing.drawLine(prevX, prevY, x, y);  // Draw the line.
        
-       int dDominoX = x - prevDomX;
-       int dDominoY = y - prevDomY;
-       int dX = x - prevPointQueue.peekFirst().x;//prevX;
-       int dY = y - prevPointQueue.peekFirst().y;//prevY;
+       int dX = x - prevDomX;//prevX;
+       int dY = y - prevDomY;//prevY;
        
-       if (Math.sqrt((dDominoX*dDominoX) + (dDominoY*dDominoY)) >= DOMINOE_DISTANCE) {
+       if (Math.sqrt((dX*dX) + (dY*dY)) >= DOMINOE_DISTANCE) {
            dominoQueue.add(new Domino(x, y, 0));
            graphicsForDrawing.drawOval(x, y, 4, 4);
+           
+           double slope = 999999;
+           if (dX != 0) {
+               slope = (double)dY / (double)dX;
+           }
+           System.out.println(slope);
+           int b = prevDomY - (int)(slope*prevDomX);
+           graphicsForDrawing.drawLine( prevDomX - 10, (int)(slope*(prevDomX-10)) + b, prevDomX + 10, (int)(slope*(prevDomX+10)) + b);
            prevDomX = x;
            prevDomY = y;
-           double slope = 999999;
-           if (dY != 0) {
-               slope = dX / dY;
-           }
-           double b = y - slope*x;
-           graphicsForDrawing.drawLine(x - 20, (int)(slope*(x-20) + b), x, y);
        }
        prevX = x;  // Get ready for the next line segment in the curve.
        prevY = y;
