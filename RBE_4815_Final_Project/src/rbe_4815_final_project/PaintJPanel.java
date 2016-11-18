@@ -290,6 +290,9 @@ public class PaintJPanel extends javax.swing.JPanel
         return dominoQueue;
     }
     
+    public void setDominoes(LinkedList<Domino> dominoes){
+        dominoQueue = dominoes;
+    }
     @Override
     public void mouseEntered(MouseEvent evt) { }   // Some empty routines.
     @Override

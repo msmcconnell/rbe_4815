@@ -7,11 +7,13 @@ package rbe_4815_final_project;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.LinkedList;
 import javax.swing.JFileChooser;
-import javax.swing.UIManager;
 
 /**
  *
@@ -122,6 +124,11 @@ public class MainUI extends javax.swing.JFrame {
 
         load_path_jButton.setBackground(new java.awt.Color(51, 152, 220));
         load_path_jButton.setText("Load Path");
+        load_path_jButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                load_path_jButtonActionPerformed(evt);
+            }
+        });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 3;
@@ -224,7 +231,7 @@ public class MainUI extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void save_path_jButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_save_path_jButtonActionPerformed
-        LinkedList<Domino> pathDominoes = getCanvasPaintJPanel().getDominoes();
+        LinkedList<Domino> pathDominoes = this.canvas_PaintJPanel.getDominoes();
         JFileChooser dirChooser = new JFileChooser();
         //dirChooser
         //dirChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -239,11 +246,9 @@ public class MainUI extends javax.swing.JFrame {
                     int x = d.getPosition().x;
                     int y = d.getPosition().y;
                     double angle = d.getOrientation();
-                    lines = lines.concat("[" + x + ", " + y + ", " + angle + "]\n");
+                    lines = lines.concat(x + ", " + y + ", " + angle + "\n");
                     
                 }
-                System.out.println("Done");
-                System.out.println(lines);
                 outStream.write(lines.getBytes());
                 outStream.close();
             }
@@ -253,7 +258,7 @@ public class MainUI extends javax.swing.JFrame {
     }//GEN-LAST:event_save_path_jButtonActionPerformed
 
     private void new_path_jButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_new_path_jButtonActionPerformed
-        getCanvasPaintJPanel().resetPath();
+        this.canvas_PaintJPanel.resetPath();
         
     }//GEN-LAST:event_new_path_jButtonActionPerformed
 
@@ -273,6 +278,45 @@ public class MainUI extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_status_jCheckBoxActionPerformed
 
+    private void load_path_jButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_load_path_jButtonActionPerformed
+         LinkedList<Domino> pathDominoes = this.canvas_PaintJPanel.getDominoes();
+        JFileChooser dirChooser = new JFileChooser();
+        //dirChooser
+        //dirChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        Integer opt = dirChooser.showOpenDialog(this);
+        if (opt == JFileChooser.APPROVE_OPTION) {
+            File pathFile = dirChooser.getSelectedFile();
+           
+            BufferedReader br = null;
+
+            LinkedList<Domino> dominoQueue = new LinkedList<Domino>();
+            try {
+
+                String line;
+             
+                br = new BufferedReader(new FileReader(pathFile));
+
+                while ((line = br.readLine()) != null) {
+                    String[] elementArray = line.split(",");
+                    int x = Integer.parseInt(elementArray[0].trim());
+                    int y = Integer.parseInt(elementArray[1].trim());
+                    double angle = Double.parseDouble(elementArray[2].trim());
+                    dominoQueue.add(new Domino(x,y,angle));
+                }
+                canvas_PaintJPanel.setDominoes(dominoQueue);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                        if (br != null)br.close();
+                } catch (IOException ex) {
+                        ex.printStackTrace();
+                }
+            }
+        }
+    }//GEN-LAST:event_load_path_jButtonActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -283,14 +327,6 @@ public class MainUI extends javax.swing.JFrame {
                 new MainUI().setVisible(true);
             }
         });
-    }
-
-    /**
-     * Function to access the drawing panel
-     * @return javax.swing.JPanel The jPanel canvas used for drawing on
-     */
-    public PaintJPanel getCanvasPaintJPanel(){
-        return this.canvas_PaintJPanel;
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
