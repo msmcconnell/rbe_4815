@@ -11,8 +11,9 @@ import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeSupport;
 import java.util.LinkedList;
-import java.util.List;
 
 /**
  *
@@ -63,15 +64,25 @@ public class PaintJPanel extends javax.swing.JPanel
     /* The following variables are used when the user is sketching a
      curve while dragging a mouse. */
 
-    private int prevX, prevY, prevDomX, prevDomY;     // The previous location of the mouse.
+    private int prevX, prevY;     // The previous location of the mouse.
 
     private boolean dragging;      // This is set to true while the user is drawing.
-
-    private Graphics graphicsForDrawing;  // A graphics context for the panel
+    
+    public BufferedImage canvasImage;
+    
+    public Graphics graphicsForDrawing;  // A graphics context for the panel
                                 // that is used to draw the user's curve.
-    private static final int DOMINOE_DISTANCE = 10;
+    //Units in mm
+    private static final double DOMINO_THICKNESS = 6.35;
+    private static final double DOMINO_HEIGHT = 44.45;
+    private static final double PIXELS_PER_MM = 1.0;
+    private static final int DOMINO_DISTANCE = (int)(PIXELS_PER_MM * (0.54*DOMINO_HEIGHT + 0.92*DOMINO_THICKNESS)); //d=0.54*h + 0.92*t ; h = 
     
     private static final int AVERAGING_SIZE = 10;
+    
+    private static final int MAX_ANGLE = 40;
+    
+    public boolean isValidPath = true;
     
     private int movingSumX = 0;
     private int movingSumY = 0;
@@ -80,6 +91,9 @@ public class PaintJPanel extends javax.swing.JPanel
     
     private LinkedList<Point> prevPointQueue = new LinkedList<Point>(); 
 
+    private PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
+    
+    
     /**
      * Draw the contents of the panel.  Since no information is
      * saved about what the user has drawn, the user's drawing
@@ -87,16 +101,17 @@ public class PaintJPanel extends javax.swing.JPanel
      */
     @Override
     public void paintComponent(Graphics g) {
-
        super.paintComponent(g);  // Fill with background color (white).
+       
+       //g.drawImage(canvasImage, 0, 0, canvasImage.getWidth(), canvasImage.getHeight(), null);
     }
-
+    
     /**
       * This routine is called in mousePressed when the user clicks on the drawing area.
         * It sets up the graphics context, graphicsForDrawing, to be used to draw the user's 
         * sketch in the current color.
       */
-    private void setUpDrawingGraphics() {
+    public void setUpDrawingGraphics() {
        graphicsForDrawing = getGraphics();
        graphicsForDrawing.setColor(Color.BLUE);
     }
@@ -113,29 +128,39 @@ public class PaintJPanel extends javax.swing.JPanel
        int x = evt.getX();   // x-coordinate where the user clicked.
        int y = evt.getY();   // y-coordinate where the user clicked.
 
-       int width = getWidth();    // Width of the panel.
-       int height = getHeight();  // Height of the panel.
-
        if (dragging == true)  // Ignore mouse presses that occur
           return;             //    when user is already drawing a curve.
                               //    (This can happen if the user presses
                               //    two mouse buttons at the same time.)
-       else {
+       else if (prevPointQueue.isEmpty()) {
              // The user has clicked on the white drawing area.
              // Start drawing a curve from the point (x,y).
             prevX = x;
             prevY = y;
-            prevDomX = x;
-            prevDomY = y;
             dragging = true;
             movingSumX = x;
             movingSumY = y;
             prevPointQueue.clear();
             prevPointQueue.add(new Point(x,y));
+            dominoQueue.add(new Domino(x, y, 0));
             setUpDrawingGraphics();
        }
     }
 
+    public void resetPath() {
+        movingSumX = 0;
+        movingSumY = 0;
+        dominoQueue.clear();
+        prevPointQueue.clear();
+        canvasImage = null;
+        if (graphicsForDrawing != null) {
+            graphicsForDrawing.setColor(Color.WHITE);
+            graphicsForDrawing.fillRect(0, 0, getWidth(), getHeight());
+            graphicsForDrawing.dispose();
+            graphicsForDrawing = null;
+        }
+        setIsValidPath(true);
+    }
 
     /**
      * Called whenever the user releases the mouse button. If the user was drawing 
@@ -147,8 +172,6 @@ public class PaintJPanel extends javax.swing.JPanel
        if (dragging == false)
           return;  // Nothing to do because the user isn't drawing.
        dragging = false;
-       graphicsForDrawing.dispose();
-       graphicsForDrawing = null;
     }
 
 
@@ -176,7 +199,7 @@ public class PaintJPanel extends javax.swing.JPanel
            
            movingSumX += x;
            movingSumY += y;
-           Point averagedPoint = new Point(movingSumX / AVERAGING_SIZE, movingSumY / AVERAGING_SIZE);//computeAverage(prevPointQueue);
+           Point averagedPoint = new Point(movingSumX / AVERAGING_SIZE, movingSumY / AVERAGING_SIZE);
            x = averagedPoint.x;
            y = averagedPoint.y;
        }
@@ -188,35 +211,83 @@ public class PaintJPanel extends javax.swing.JPanel
        graphicsForDrawing.setColor(Color.BLUE);
        graphicsForDrawing.drawLine(prevX, prevY, x, y);  // Draw the line.
        
-       int dX = x - prevDomX;//prevX;
-       int dY = y - prevDomY;//prevY;
+       Domino prevDomino = dominoQueue.peekLast();
+       int dX = x - prevDomino.getPosition().x;
+       int dY = y - prevDomino.getPosition().y;
        
-       if (Math.sqrt((dX*dX) + (dY*dY)) >= DOMINOE_DISTANCE) {
-           dominoQueue.add(new Domino(x, y, 0));
+       if (Math.sqrt((dX*dX) + (dY*dY)) >= DOMINO_DISTANCE) {
            graphicsForDrawing.drawOval(x, y, 4, 4);
            
-           double slope = 999999;
-           if (dX != 0) {
-               slope = (double)dY / (double)dX;
+           double slope = getSlope(prevDomino.getPosition(), new Point(x, y));
+           double angle = getAngle(prevDomino.getPosition(), new Point(x, y));
+           int b = getIntercept(slope, prevDomino.getPosition());
+           //need a get angle function here
+           prevDomino.setOrientation(angle);
+           if (dominoQueue.size() >= 2) {
+               double prevPrevAngle = dominoQueue.get(dominoQueue.size() - 2).getOrientation();
+               double dA = getSmallestAngleDifference(angle, prevPrevAngle);
+               if (Math.abs(dA) > MAX_ANGLE) {
+                   setIsValidPath(false);
+               }
            }
-           System.out.println(slope);
-           int b = prevDomY - (int)(slope*prevDomX);
-           graphicsForDrawing.drawLine( prevDomX - 10, (int)(slope*(prevDomX-10)) + b, prevDomX + 10, (int)(slope*(prevDomX+10)) + b);
-           prevDomX = x;
-           prevDomY = y;
+           
+           dominoQueue.add(new Domino(x, y, angle));
+           drawLineSegment(graphicsForDrawing, 15, prevDomino.getPosition(), slope, b);
+           
        }
        prevX = x;  // Get ready for the next line segment in the curve.
        prevY = y;
     }
+    
+    private double getSmallestAngleDifference(double angle1, double angle2){
+        double a1 = Math.toRadians(angle1);
+        double a2 = Math.toRadians(angle2);
+        double dA = Math.atan2(Math.sin(a2-a1), Math.cos(a2-a1));
+        return Math.toDegrees(dA);
+    }
+    
+    private double getAngle(Point p1, Point p2) {
+        int dX = p2.x - p1.x;
+        int dY = p2.y - p1.y;
+        double polarTheta = Math.atan2(dX, dY);
+        return Math.toDegrees(polarTheta);
+    }
+    
+    private double getSlope(Point p1, Point p2) {
+        int dX = p2.x - p1.x;
+        int dY = p2.y - p1.y;
+        double slope = 999999;
+           if (dX != 0) {
+               slope = (double)dY / (double)dX;
+           }
+        return slope;
+    }
 
-    private Point computeAverageSlope(List<Point> points) {
-        int sumX = 0;
-        int sumY = 0;
-        for (int i = 0; i < points.size(); i++) {
-            sumX += points.get(i).x;
-            sumY += points.get(i).y;
-        }
-        return new Point(sumX / points.size(), sumY / points.size());
+    private int getIntercept(double slope, Point p) {
+        return p.y - (int)(slope*p.x);
+    }
+    
+    private void drawLineSegment(Graphics g,int width, Point middlePoint, double slope, int intercept) {
+        int xMin = middlePoint.x - width;
+        int xMax = middlePoint.x + width;
+        
+        g.setColor(Color.red);
+        g.drawLine(xMin, (int)(slope*(xMin)) + intercept, xMax, (int)(slope*(xMax)) + intercept);
+    }
+    
+    private void setIsValidPath(boolean valid) {
+        System.out.println("Here");
+        this.firePropertyChange("isValidPath", this.isValidPath, valid);
+        this.isValidPath = valid;
+        //myPropertyChangeSupport.
+    }
+    
+    public boolean getIsValidPath() {
+        return isValidPath;
+    }
+    
+    public LinkedList<Domino> getDominoes() {
+        return dominoQueue;
     }
     
     @Override

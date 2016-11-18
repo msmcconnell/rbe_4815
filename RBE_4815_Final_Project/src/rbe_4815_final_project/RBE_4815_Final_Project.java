@@ -4,35 +4,26 @@
  * and open the template in the editor.
  */
 package rbe_4815_final_project;
-import java.awt.Color;
-import java.awt.Graphics;
-import javax.swing.JPanel;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import javax.swing.UIManager;
 /**
  *
  * @author motmo
  */
 public class RBE_4815_Final_Project {
-
+    boolean yo = false;
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        }catch(Exception ex) {
+            ex.printStackTrace();
+        }
        MainUI main_ui = new MainUI();
        main_ui.setVisible(true);
-       //Trying to figure out how to draw
-       JPanel canvasJPanel = main_ui.getCanvasPaintJPanel();
-//       canvasJPanel.getGraphicsConfiguration();
-//       
-//       Graphics canvasGraphic = canvasJPanel.getGraphics();
-//       canvasGraphic.setPaintMode();
-//       canvasGraphic.setColor(Color.blue);
-//       canvasGraphic.drawLine(40, 40, 100, 100);
-//       canvasGraphic.fillRect(0, 0, 1000, 1000);
-//      // canvasGraphic.drawRect(0, 0, 1000, 1000);
-//       System.out.println(canvasGraphic.getClipBounds());
-//       canvasJPanel.paintComponents(canvasGraphic);
-//       canvasJPanel.paint(canvasGraphic);
-      
     }
     
 }

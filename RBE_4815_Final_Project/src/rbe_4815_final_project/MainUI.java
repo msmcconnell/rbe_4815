@@ -5,6 +5,14 @@
  */
 package rbe_4815_final_project;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.LinkedList;
+import javax.swing.JFileChooser;
+import javax.swing.UIManager;
+
 /**
  *
  * @author motmo
@@ -16,6 +24,17 @@ public class MainUI extends javax.swing.JFrame {
      */
     public MainUI() {
         initComponents();
+        canvas_PaintJPanel.addPropertyChangeListener("isValidPath", new PropertyChangeListener(){
+                 @Override
+                 public void propertyChange(PropertyChangeEvent event) {
+                     String property = event.getPropertyName();
+                     System.out.println("Here1");
+                     if ("isValidPath".equals(property)) {
+                         System.out.println((boolean)event.getNewValue());
+                         valid_jCheckBox.setSelected((boolean)event.getNewValue());
+                        }
+                 }
+                });
     }
 
     /**
@@ -46,7 +65,6 @@ public class MainUI extends javax.swing.JFrame {
         setSize(new java.awt.Dimension(1280, 720));
         getContentPane().setLayout(new java.awt.GridBagLayout());
 
-        canvas_PaintJPanel.setBackground(new java.awt.Color(255, 255, 255));
         canvas_PaintJPanel.setPreferredSize(new java.awt.Dimension(1000, 1000));
 
         javax.swing.GroupLayout canvas_PaintJPanelLayout = new javax.swing.GroupLayout(canvas_PaintJPanel);
@@ -165,6 +183,7 @@ public class MainUI extends javax.swing.JFrame {
 
         valid_jCheckBox.setBackground(new java.awt.Color(51, 51, 51));
         valid_jCheckBox.setForeground(new java.awt.Color(255, 255, 255));
+        valid_jCheckBox.setSelected(true);
         valid_jCheckBox.setText("Valid");
         valid_jCheckBox.setToolTipText("");
         valid_jCheckBox.addActionListener(new java.awt.event.ActionListener() {
@@ -205,11 +224,36 @@ public class MainUI extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void save_path_jButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_save_path_jButtonActionPerformed
-        // TODO add your handling code here:
+        LinkedList<Domino> pathDominoes = getCanvasPaintJPanel().getDominoes();
+        JFileChooser dirChooser = new JFileChooser();
+        //dirChooser
+        //dirChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        Integer opt = dirChooser.showSaveDialog(this);
+        if (opt == JFileChooser.APPROVE_OPTION) {
+            File pathFile = dirChooser.getSelectedFile();
+            try {
+                FileOutputStream outStream = new FileOutputStream(pathFile, false); // true to append
+            
+                String lines = "";
+                for(Domino d : pathDominoes) {
+                    int x = d.getPosition().x;
+                    int y = d.getPosition().y;
+                    double angle = d.getOrientation();
+                    lines.concat("[" + x + ", " + y + ", " + angle + "]\n");
+                }
+                System.out.println(lines);
+                outStream.write(lines.getBytes());
+                outStream.close();
+            }
+            catch (Exception e){
+                
+            }
+        }
     }//GEN-LAST:event_save_path_jButtonActionPerformed
 
     private void new_path_jButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_new_path_jButtonActionPerformed
-        // TODO add your handling code here:
+        getCanvasPaintJPanel().resetPath();
+        
     }//GEN-LAST:event_new_path_jButtonActionPerformed
 
     private void run_jButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_run_jButtonActionPerformed
@@ -232,29 +276,6 @@ public class MainUI extends javax.swing.JFrame {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(MainUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(MainUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(MainUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(MainUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
@@ -267,7 +288,7 @@ public class MainUI extends javax.swing.JFrame {
      * Function to access the drawing panel
      * @return javax.swing.JPanel The jPanel canvas used for drawing on
      */
-    public javax.swing.JPanel getCanvasPaintJPanel(){
+    public PaintJPanel getCanvasPaintJPanel(){
         return this.canvas_PaintJPanel;
     }
     
