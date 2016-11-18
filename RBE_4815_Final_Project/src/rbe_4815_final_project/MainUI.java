@@ -239,14 +239,15 @@ public class MainUI extends javax.swing.JFrame {
                     int x = d.getPosition().x;
                     int y = d.getPosition().y;
                     double angle = d.getOrientation();
-                    lines.concat("[" + x + ", " + y + ", " + angle + "]\n");
+                    lines = lines.concat("[" + x + ", " + y + ", " + angle + "]\n");
+                    
                 }
+                System.out.println("Done");
                 System.out.println(lines);
                 outStream.write(lines.getBytes());
                 outStream.close();
             }
             catch (Exception e){
-                
             }
         }
     }//GEN-LAST:event_save_path_jButtonActionPerformed
