@@ -82,7 +82,11 @@ public class PaintJPanel extends javax.swing.JPanel
     
     private static final int MAX_ANGLE = 40;
     
-    public boolean isValidPath = true;
+    private static final int DEFAULT_DOMINO_COUNT = 120;
+    
+    private boolean isValidPath = true;
+    
+    private int remainingDominoes = DEFAULT_DOMINO_COUNT;
     
     private int movingSumX = 0;
     private int movingSumY = 0;
@@ -92,6 +96,8 @@ public class PaintJPanel extends javax.swing.JPanel
     private LinkedList<Point> prevPointQueue = new LinkedList<Point>(); 
 
     private PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
+    
+    
     
     
     /**
@@ -217,6 +223,10 @@ public class PaintJPanel extends javax.swing.JPanel
        
        if (Math.sqrt((dX*dX) + (dY*dY)) >= DOMINO_DISTANCE) {
            graphicsForDrawing.drawOval(x, y, 4, 4);
+           decrementRemainingDominoes();
+           if (getRemainingDominoes() <= 0) {
+               dragging = false;
+           }
            
            double slope = getSlope(prevDomino.getPosition(), new Point(x, y));
            double angle = getAngle(prevDomino.getPosition(), new Point(x, y));
@@ -228,6 +238,7 @@ public class PaintJPanel extends javax.swing.JPanel
                double dA = getSmallestAngleDifference(angle, prevPrevAngle);
                if (Math.abs(dA) > MAX_ANGLE) {
                    setIsValidPath(false);
+                   dragging = false;
                }
            }
            
@@ -276,7 +287,6 @@ public class PaintJPanel extends javax.swing.JPanel
     }
     
     private void setIsValidPath(boolean valid) {
-        System.out.println("Here");
         this.firePropertyChange("isValidPath", this.isValidPath, valid);
         this.isValidPath = valid;
         //myPropertyChangeSupport.
@@ -284,6 +294,19 @@ public class PaintJPanel extends javax.swing.JPanel
     
     public boolean getIsValidPath() {
         return isValidPath;
+    }
+    
+    private void decrementRemainingDominoes(){
+        setRemainingDominoes(getRemainingDominoes() - 1);
+    }
+    
+    public int getRemainingDominoes() {
+        return remainingDominoes;
+    }
+    
+    public void setRemainingDominoes(int dominoCount) {
+        this.firePropertyChange("remainingDominoes", remainingDominoes, dominoCount);
+        remainingDominoes = dominoCount;
     }
     
     public LinkedList<Domino> getDominoes() {

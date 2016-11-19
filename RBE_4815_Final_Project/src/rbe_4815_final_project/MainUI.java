@@ -26,15 +26,17 @@ public class MainUI extends javax.swing.JFrame {
      */
     public MainUI() {
         initComponents();
-        canvas_PaintJPanel.addPropertyChangeListener("isValidPath", new PropertyChangeListener(){
+        canvas_PaintJPanel.addPropertyChangeListener(new PropertyChangeListener(){
                  @Override
                  public void propertyChange(PropertyChangeEvent event) {
                      String property = event.getPropertyName();
-                     System.out.println("Here1");
                      if ("isValidPath".equals(property)) {
-                         System.out.println((boolean)event.getNewValue());
                          valid_jCheckBox.setSelected((boolean)event.getNewValue());
                         }
+                     else if ("remainingDominoes".equals(property)) {
+                         int remainingDominoes = canvas_PaintJPanel.getRemainingDominoes();
+                         remainingDominoes_jSpinner.setValue((Integer) remainingDominoes);
+                     }
                  }
                 });
     }
@@ -56,9 +58,11 @@ public class MainUI extends javax.swing.JFrame {
         load_path_jButton = new javax.swing.JButton();
         connect_jButton = new javax.swing.JButton();
         run_jButton = new javax.swing.JButton();
-        menu_jLabel = new javax.swing.JLabel();
         status_jCheckBox = new javax.swing.JCheckBox();
         valid_jCheckBox = new javax.swing.JCheckBox();
+        remainingDominoes_jSpinner = new javax.swing.JSpinner();
+        remainingDominoes_jLabel = new javax.swing.JLabel();
+        menu_jLabel2 = new javax.swing.JLabel();
         output_jScrollPane = new javax.swing.JScrollPane();
         output_jTextPane = new javax.swing.JTextPane();
 
@@ -165,15 +169,6 @@ public class MainUI extends javax.swing.JFrame {
         gridBagConstraints.insets = new java.awt.Insets(5, 10, 5, 10);
         menu_jPanel.add(run_jButton, gridBagConstraints);
 
-        menu_jLabel.setFont(new java.awt.Font("Tahoma", 1, 24)); // NOI18N
-        menu_jLabel.setForeground(new java.awt.Color(255, 255, 255));
-        menu_jLabel.setText("Menu");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridwidth = 2;
-        menu_jPanel.add(menu_jLabel, gridBagConstraints);
-
         status_jCheckBox.setBackground(new java.awt.Color(51, 51, 51));
         status_jCheckBox.setForeground(new java.awt.Color(255, 255, 255));
         status_jCheckBox.setText("Status");
@@ -203,6 +198,39 @@ public class MainUI extends javax.swing.JFrame {
         gridBagConstraints.gridy = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         menu_jPanel.add(valid_jCheckBox, gridBagConstraints);
+
+        remainingDominoes_jSpinner.setValue(120);
+        remainingDominoes_jSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                remainingDominoes_jSpinnerStateChanged(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 6;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 10);
+        menu_jPanel.add(remainingDominoes_jSpinner, gridBagConstraints);
+
+        remainingDominoes_jLabel.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        remainingDominoes_jLabel.setForeground(new java.awt.Color(255, 255, 255));
+        remainingDominoes_jLabel.setText("Remaining Dominoes");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 6;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 0);
+        menu_jPanel.add(remainingDominoes_jLabel, gridBagConstraints);
+
+        menu_jLabel2.setFont(new java.awt.Font("Tahoma", 1, 24)); // NOI18N
+        menu_jLabel2.setForeground(new java.awt.Color(255, 255, 255));
+        menu_jLabel2.setText("Menu");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridwidth = 2;
+        menu_jPanel.add(menu_jLabel2, gridBagConstraints);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
@@ -259,7 +287,6 @@ public class MainUI extends javax.swing.JFrame {
 
     private void new_path_jButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_new_path_jButtonActionPerformed
         this.canvas_PaintJPanel.resetPath();
-        
     }//GEN-LAST:event_new_path_jButtonActionPerformed
 
     private void run_jButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_run_jButtonActionPerformed
@@ -277,9 +304,8 @@ public class MainUI extends javax.swing.JFrame {
     private void status_jCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_status_jCheckBoxActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_status_jCheckBoxActionPerformed
-
+  
     private void load_path_jButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_load_path_jButtonActionPerformed
-         LinkedList<Domino> pathDominoes = this.canvas_PaintJPanel.getDominoes();
         JFileChooser dirChooser = new JFileChooser();
         //dirChooser
         //dirChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -317,6 +343,12 @@ public class MainUI extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_load_path_jButtonActionPerformed
 
+    private void remainingDominoes_jSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_remainingDominoes_jSpinnerStateChanged
+
+        int remainingDominoes = (int) remainingDominoes_jSpinner.getValue();
+        canvas_PaintJPanel.setRemainingDominoes(remainingDominoes);
+    }//GEN-LAST:event_remainingDominoes_jSpinnerStateChanged
+
     /**
      * @param args the command line arguments
      */
@@ -333,11 +365,13 @@ public class MainUI extends javax.swing.JFrame {
     private rbe_4815_final_project.PaintJPanel canvas_PaintJPanel;
     private javax.swing.JButton connect_jButton;
     private javax.swing.JButton load_path_jButton;
-    private javax.swing.JLabel menu_jLabel;
+    private javax.swing.JLabel menu_jLabel2;
     private javax.swing.JPanel menu_jPanel;
     private javax.swing.JButton new_path_jButton;
     private javax.swing.JScrollPane output_jScrollPane;
     private javax.swing.JTextPane output_jTextPane;
+    private javax.swing.JLabel remainingDominoes_jLabel;
+    private javax.swing.JSpinner remainingDominoes_jSpinner;
     private javax.swing.JButton run_jButton;
     private javax.swing.JButton save_path_jButton;
     private javax.swing.JCheckBox status_jCheckBox;
