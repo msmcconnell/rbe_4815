@@ -346,7 +346,7 @@ public class MainUI extends javax.swing.JFrame {
     private void remainingDominoes_jSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_remainingDominoes_jSpinnerStateChanged
 
         int remainingDominoes = (int) remainingDominoes_jSpinner.getValue();
-        canvas_PaintJPanel.setRemainingDominoes(remainingDominoes);
+        canvas_PaintJPanel.setRemainingDominoes(remainingDominoes, false);
     }//GEN-LAST:event_remainingDominoes_jSpinnerStateChanged
 
     /**

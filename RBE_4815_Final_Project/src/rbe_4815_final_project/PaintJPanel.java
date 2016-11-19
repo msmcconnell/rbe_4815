@@ -150,6 +150,7 @@ public class PaintJPanel extends javax.swing.JPanel
             prevPointQueue.add(new Point(x,y));
             dominoQueue.add(new Domino(x, y, 0));
             setUpDrawingGraphics();
+            decrementRemainingDominoes();
        }
     }
 
@@ -297,15 +298,17 @@ public class PaintJPanel extends javax.swing.JPanel
     }
     
     private void decrementRemainingDominoes(){
-        setRemainingDominoes(getRemainingDominoes() - 1);
+        setRemainingDominoes(getRemainingDominoes() - 1, true);
     }
     
     public int getRemainingDominoes() {
         return remainingDominoes;
     }
     
-    public void setRemainingDominoes(int dominoCount) {
-        this.firePropertyChange("remainingDominoes", remainingDominoes, dominoCount);
+    public void setRemainingDominoes(int dominoCount, boolean fireChange) {
+        if (fireChange) {
+            this.firePropertyChange("remainingDominoes", remainingDominoes, dominoCount);
+        }
         remainingDominoes = dominoCount;
     }
     
