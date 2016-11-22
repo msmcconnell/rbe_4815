@@ -329,7 +329,9 @@ public class MainUI extends javax.swing.JFrame {
                     double angle = Double.parseDouble(elementArray[2].trim());
                     dominoQueue.add(new Domino(x,y,angle));
                 }
+                canvas_PaintJPanel.resetPath();
                 canvas_PaintJPanel.setDominoes(dominoQueue);
+                canvas_PaintJPanel.drawPath();
 
             } catch (IOException e) {
                 e.printStackTrace();

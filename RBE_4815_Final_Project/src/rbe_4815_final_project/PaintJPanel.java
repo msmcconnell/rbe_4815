@@ -7,10 +7,12 @@ package rbe_4815_final_project;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeSupport;
 import java.util.LinkedList;
@@ -70,12 +72,16 @@ public class PaintJPanel extends javax.swing.JPanel
     
     public BufferedImage canvasImage;
     
-    public Graphics graphicsForDrawing;  // A graphics context for the panel
+    public Graphics2D graphicsForDrawing;  // A graphics context for the panel
                                 // that is used to draw the user's curve.
     //Units in mm
     private static final double DOMINO_THICKNESS = 6.35;
     private static final double DOMINO_HEIGHT = 44.45;
+    private static final double DOMINO_WIDTH = 20.63;
     private static final double PIXELS_PER_MM = 1.0;
+    private static final double DOMINO_PIXEL_HEIGHT = DOMINO_HEIGHT * PIXELS_PER_MM;
+    private static final double DOMINO_PIXEL_THICKNESS = DOMINO_THICKNESS * PIXELS_PER_MM;
+    private static final double DOMINO_PIXEL_WIDTH = DOMINO_WIDTH * PIXELS_PER_MM;
     private static final int DOMINO_DISTANCE = (int)(PIXELS_PER_MM * (0.54*DOMINO_HEIGHT + 0.92*DOMINO_THICKNESS)); //d=0.54*h + 0.92*t ; h = 
     
     private static final int AVERAGING_SIZE = 10;
@@ -97,7 +103,7 @@ public class PaintJPanel extends javax.swing.JPanel
 
     private PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
     
-    
+    private boolean pathLocked = false;
     
     
     /**
@@ -118,7 +124,7 @@ public class PaintJPanel extends javax.swing.JPanel
         * sketch in the current color.
       */
     public void setUpDrawingGraphics() {
-       graphicsForDrawing = getGraphics();
+       graphicsForDrawing = (Graphics2D) getGraphics();
        graphicsForDrawing.setColor(Color.BLUE);
     }
 
@@ -134,7 +140,7 @@ public class PaintJPanel extends javax.swing.JPanel
        int x = evt.getX();   // x-coordinate where the user clicked.
        int y = evt.getY();   // y-coordinate where the user clicked.
 
-       if (dragging == true)  // Ignore mouse presses that occur
+       if (dragging == true || pathLocked)  // Ignore mouse presses that occur
           return;             //    when user is already drawing a curve.
                               //    (This can happen if the user presses
                               //    two mouse buttons at the same time.)
@@ -166,6 +172,7 @@ public class PaintJPanel extends javax.swing.JPanel
             graphicsForDrawing.dispose();
             graphicsForDrawing = null;
         }
+        pathLocked = false;
         setIsValidPath(true);
     }
 
@@ -223,14 +230,14 @@ public class PaintJPanel extends javax.swing.JPanel
        int dY = y - prevDomino.getPosition().y;
        
        if (Math.sqrt((dX*dX) + (dY*dY)) >= DOMINO_DISTANCE) {
-           graphicsForDrawing.drawOval(x, y, 4, 4);
+           graphicsForDrawing.drawOval(x - 2, y - 2, 4, 4);
            decrementRemainingDominoes();
            if (getRemainingDominoes() <= 0) {
                dragging = false;
            }
            
            double slope = getSlope(prevDomino.getPosition(), new Point(x, y));
-           double angle = getAngle(prevDomino.getPosition(), new Point(x, y));
+           double angle = getAngle(prevDomino.getPosition(), new Point(x, y)); //For some reason this needs to be negative
            int b = getIntercept(slope, prevDomino.getPosition());
            //need a get angle function here
            prevDomino.setOrientation(angle);
@@ -242,9 +249,11 @@ public class PaintJPanel extends javax.swing.JPanel
                    dragging = false;
                }
            }
-           
-           dominoQueue.add(new Domino(x, y, angle));
-           drawLineSegment(graphicsForDrawing, 15, prevDomino.getPosition(), slope, b);
+           Domino newDomino = new Domino(x, y, angle);
+           drawDomino(prevDomino, graphicsForDrawing);
+           dominoQueue.add(newDomino);
+           //Uncomment to view the normal lines of the dominos
+          // drawLineSegment(graphicsForDrawing, 15, prevDomino.getPosition(), slope, b);
            
        }
        prevX = x;  // Get ready for the next line segment in the curve.
@@ -279,7 +288,7 @@ public class PaintJPanel extends javax.swing.JPanel
         return p.y - (int)(slope*p.x);
     }
     
-    private void drawLineSegment(Graphics g,int width, Point middlePoint, double slope, int intercept) {
+    private void drawLineSegment(Graphics2D g,int width, Point middlePoint, double slope, int intercept) {
         int xMin = middlePoint.x - width;
         int xMax = middlePoint.x + width;
         
@@ -319,6 +328,35 @@ public class PaintJPanel extends javax.swing.JPanel
     public void setDominoes(LinkedList<Domino> dominoes){
         dominoQueue = dominoes;
     }
+    
+    public void drawDomino(Domino d, Graphics2D g) {
+        Point pos = d.getPosition();
+        AffineTransform transform = graphicsForDrawing.getTransform();
+        graphicsForDrawing.rotate(Math.toRadians(-d.getOrientation()), pos.x, pos.y);
+        
+        int thickness_from_center = (int) (DOMINO_PIXEL_THICKNESS / 2);
+        int width_from_center = (int) (DOMINO_PIXEL_WIDTH / 2);
+        graphicsForDrawing.drawRect(pos.x - width_from_center, 
+                                    pos.y - thickness_from_center, 
+                                    (int)DOMINO_PIXEL_WIDTH,
+                                    (int)DOMINO_PIXEL_THICKNESS);
+        graphicsForDrawing.setTransform(transform);
+    }
+    
+    public void drawPath() {
+        setUpDrawingGraphics();
+        Point prevPos = dominoQueue.peekFirst().getPosition();
+        for (Domino d : dominoQueue){
+            Point pos = d.getPosition();
+            graphicsForDrawing.drawOval(pos.x - 2, pos.y - 2, 4, 4);
+            graphicsForDrawing.drawLine(prevPos.x, prevPos.y, pos.x, pos.y);  // Draw the line.
+            drawDomino(d, graphicsForDrawing);
+            prevPos = pos;
+        }
+        
+        pathLocked = true;
+    }
+    
     @Override
     public void mouseEntered(MouseEvent evt) { }   // Some empty routines.
     @Override
