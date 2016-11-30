@@ -5,10 +5,13 @@
  */
 package rbe_4815_final_project;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Polygon;
+import java.awt.RenderingHints;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -105,6 +108,8 @@ public class PaintJPanel extends javax.swing.JPanel
     
     private boolean pathLocked = false;
     
+    private Polygon workSpace;
+    
     
     /**
      * Draw the contents of the panel.  Since no information is
@@ -114,8 +119,8 @@ public class PaintJPanel extends javax.swing.JPanel
     @Override
     public void paintComponent(Graphics g) {
        super.paintComponent(g);  // Fill with background color (white).
-       
        //g.drawImage(canvasImage, 0, 0, canvasImage.getWidth(), canvasImage.getHeight(), null);
+       drawWorkSpace((Graphics2D) g);
     }
     
     /**
@@ -125,6 +130,7 @@ public class PaintJPanel extends javax.swing.JPanel
       */
     public void setUpDrawingGraphics() {
        graphicsForDrawing = (Graphics2D) getGraphics();
+       graphicsForDrawing.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
        graphicsForDrawing.setColor(Color.BLUE);
     }
 
@@ -144,7 +150,7 @@ public class PaintJPanel extends javax.swing.JPanel
           return;             //    when user is already drawing a curve.
                               //    (This can happen if the user presses
                               //    two mouse buttons at the same time.)
-       else if (prevPointQueue.isEmpty()) {
+       else if (prevPointQueue.isEmpty() && workSpace.contains(x, y)) {
              // The user has clicked on the white drawing area.
              // Start drawing a curve from the point (x,y).
             prevX = x;
@@ -156,8 +162,30 @@ public class PaintJPanel extends javax.swing.JPanel
             prevPointQueue.add(new Point(x,y));
             dominoQueue.add(new Domino(x, y, 0));
             setUpDrawingGraphics();
+            BasicStroke stroke = new BasicStroke(3);
+            graphicsForDrawing.setStroke(stroke);
             decrementRemainingDominoes();
        }
+    }
+    
+    public void drawWorkSpace(Graphics2D g) {
+        int width = getWidth();
+        int height = getHeight();
+        Point p1 = new Point(width - (int)(2024 * PIXELS_PER_MM), (int)(111 * PIXELS_PER_MM));
+        Point p2 = new Point(width - (int)(1960 * PIXELS_PER_MM), (int)(0 * PIXELS_PER_MM));
+        Point p3 = new Point(width - (int)(448 * PIXELS_PER_MM),  (int)(0 * PIXELS_PER_MM));
+        Point p4 = new Point(width - (int)(448 * PIXELS_PER_MM),  (int)(206 * PIXELS_PER_MM));
+        Point p5 = new Point(width - (int)(242 * PIXELS_PER_MM),  (int)(206 * PIXELS_PER_MM));
+        Point p6 = new Point(width - (int)(242 * PIXELS_PER_MM),  (int)(958 * PIXELS_PER_MM));
+        Point p7 = new Point(width - (int)(1362 * PIXELS_PER_MM), (int)(958 * PIXELS_PER_MM));
+        g.setColor(Color.GREEN);
+        BasicStroke stroke = new BasicStroke(10);
+        g.setStroke(stroke);
+        int[] xPoints = {p1.x, p2.x, p3.x, p4.x, p5.x, p6.x, p7.x};
+        int[] yPoints = {p1.y, p2.y, p3.y, p4.y, p5.y, p6.y, p7.y};
+        workSpace = new Polygon(xPoints, yPoints, 7);
+        g.drawPolygon(workSpace);
+        
     }
 
     public void resetPath() {
@@ -174,6 +202,8 @@ public class PaintJPanel extends javax.swing.JPanel
         }
         pathLocked = false;
         setIsValidPath(true);
+        setUpDrawingGraphics();
+        drawWorkSpace(graphicsForDrawing);
     }
 
     /**
@@ -200,11 +230,11 @@ public class PaintJPanel extends javax.swing.JPanel
     @Override
     public void mouseDragged(MouseEvent evt) {
 
-       if (dragging == false)
-          return;  // Nothing to do because the user isn't drawing.
-
        int x = evt.getX();   // x-coordinate of mouse.
        int y = evt.getY();   // y-coordinate of mouse.
+        
+       if (dragging == false || !workSpace.contains(x,y))
+          return;  // Nothing to do because the user isn't drawing.
        
        if (prevPointQueue.size() >= AVERAGING_SIZE) {
            Point oldPoint = prevPointQueue.pollFirst();
@@ -222,9 +252,10 @@ public class PaintJPanel extends javax.swing.JPanel
            movingSumY += y;
        }
        
-       graphicsForDrawing.setColor(Color.BLUE);
+       graphicsForDrawing.setColor(Color.DARK_GRAY);
        graphicsForDrawing.drawLine(prevX, prevY, x, y);  // Draw the line.
-       
+       graphicsForDrawing.setColor(Color.BLUE);
+
        Domino prevDomino = dominoQueue.peekLast();
        int dX = x - prevDomino.getPosition().x;
        int dY = y - prevDomino.getPosition().y;
@@ -345,11 +376,15 @@ public class PaintJPanel extends javax.swing.JPanel
     
     public void drawPath() {
         setUpDrawingGraphics();
+        BasicStroke stroke = new BasicStroke(3);
+        graphicsForDrawing.setStroke(stroke);
         Point prevPos = dominoQueue.peekFirst().getPosition();
         for (Domino d : dominoQueue){
             Point pos = d.getPosition();
             graphicsForDrawing.drawOval(pos.x - 2, pos.y - 2, 4, 4);
+            graphicsForDrawing.setColor(Color.DARK_GRAY);
             graphicsForDrawing.drawLine(prevPos.x, prevPos.y, pos.x, pos.y);  // Draw the line.
+            graphicsForDrawing.setColor(Color.BLUE);
             drawDomino(d, graphicsForDrawing);
             prevPos = pos;
         }
