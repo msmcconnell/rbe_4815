@@ -81,7 +81,7 @@ public class PaintJPanel extends javax.swing.JPanel
     private static final double DOMINO_THICKNESS = 6.35;
     private static final double DOMINO_HEIGHT = 44.45;
     private static final double DOMINO_WIDTH = 20.63;
-    private static final double PIXELS_PER_MM = 1.0;
+    private static final double PIXELS_PER_MM = 0.5;
     private static final double DOMINO_PIXEL_HEIGHT = DOMINO_HEIGHT * PIXELS_PER_MM;
     private static final double DOMINO_PIXEL_THICKNESS = DOMINO_THICKNESS * PIXELS_PER_MM;
     private static final double DOMINO_PIXEL_WIDTH = DOMINO_WIDTH * PIXELS_PER_MM;
@@ -390,6 +390,17 @@ public class PaintJPanel extends javax.swing.JPanel
         }
         
         pathLocked = true;
+    }
+    
+    public byte[] getDataForABB() {
+        byte[] dataBytes = new byte[6 + dominoQueue.size()];
+        String dataString = getWidth() + "\n" + "0\n" + "0\n" + "90\n" + "0\n" + "180\n";
+        for(Domino d : dominoQueue) {
+            dataString = dataString.concat("" + d.getPosition().x + ", " 
+                                           + d.getPosition().y + ", " 
+                                           + (int)d.getOrientation() + "\n");
+        }
+        return dataString.getBytes();
     }
     
     @Override

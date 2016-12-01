@@ -14,12 +14,16 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.LinkedList;
 import javax.swing.JFileChooser;
+import com.fazecast.jSerialComm.*;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import javax.swing.JOptionPane;
 
 /**
  *
  * @author motmo
  */
-public class MainUI extends javax.swing.JFrame {
+public class MainUI extends javax.swing.JFrame implements WindowListener{
 
     /**
      * Creates new form MainUI
@@ -39,6 +43,12 @@ public class MainUI extends javax.swing.JFrame {
                      }
                  }
                 });
+        SerialPort[] serialPorts = SerialPort.getCommPorts();
+        port_jComboBox.removeAllItems();
+        for (SerialPort sp : serialPorts) {
+            port_jComboBox.addItem(sp.getSystemPortName());
+        }
+        //port_jComboBox.addItem("COM1");
     }
 
     /**
@@ -63,6 +73,7 @@ public class MainUI extends javax.swing.JFrame {
         remainingDominoes_jSpinner = new javax.swing.JSpinner();
         remainingDominoes_jLabel = new javax.swing.JLabel();
         menu_jLabel2 = new javax.swing.JLabel();
+        port_jComboBox = new javax.swing.JComboBox<>();
         output_jScrollPane = new javax.swing.JScrollPane();
         output_jTextPane = new javax.swing.JTextPane();
 
@@ -232,6 +243,18 @@ public class MainUI extends javax.swing.JFrame {
         gridBagConstraints.gridwidth = 2;
         menu_jPanel.add(menu_jLabel2, gridBagConstraints);
 
+        port_jComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        port_jComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                port_jComboBoxActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 10);
+        menu_jPanel.add(port_jComboBox, gridBagConstraints);
+
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 0;
@@ -290,11 +313,23 @@ public class MainUI extends javax.swing.JFrame {
     }//GEN-LAST:event_new_path_jButtonActionPerformed
 
     private void run_jButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_run_jButtonActionPerformed
-        // TODO add your handling code here:
+        if(serialPort != null && serialPort.isOpen()) {
+            byte[] bytes = canvas_PaintJPanel.getDataForABB();
+            int result = serialPort.writeBytes(bytes, bytes.length);
+            if (result == -1) {
+                //Error
+                status_jCheckBox.setSelected(false);
+            }
+        }
     }//GEN-LAST:event_run_jButtonActionPerformed
 
     private void connect_jButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_connect_jButtonActionPerformed
-        // TODO add your handling code here:
+        if (serialPort != null) {
+            serialPort.closePort();
+            serialPort.setComPortParameters(9600, 8, SerialPort.ONE_STOP_BIT, SerialPort.NO_PARITY);
+            serialPort.openPort();
+            status_jCheckBox.setSelected(serialPort.isOpen());
+        }
     }//GEN-LAST:event_connect_jButtonActionPerformed
 
     private void valid_jCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_valid_jCheckBoxActionPerformed
@@ -351,6 +386,31 @@ public class MainUI extends javax.swing.JFrame {
         canvas_PaintJPanel.setRemainingDominoes(remainingDominoes, false);
     }//GEN-LAST:event_remainingDominoes_jSpinnerStateChanged
 
+    private void port_jComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_port_jComboBoxActionPerformed
+
+       serialPort = SerialPort.getCommPort((String)port_jComboBox.getSelectedItem());
+    }//GEN-LAST:event_port_jComboBoxActionPerformed
+
+    @Override
+    public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+        if(serialPort != null){
+            serialPort.closePort();
+        }
+    }
+    
+    @Override
+    public void windowOpened(WindowEvent e){}
+    @Override
+    public void windowClosed(WindowEvent e){}
+    @Override
+    public void windowIconified(WindowEvent e){}
+    @Override
+    public void windowDeiconified(WindowEvent e){}
+    @Override
+    public void windowActivated(WindowEvent e){}
+    @Override
+    public void windowDeactivated(WindowEvent e){}
+    
     /**
      * @param args the command line arguments
      */
@@ -363,6 +423,7 @@ public class MainUI extends javax.swing.JFrame {
         });
     }
     
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private rbe_4815_final_project.PaintJPanel canvas_PaintJPanel;
     private javax.swing.JButton connect_jButton;
@@ -372,6 +433,7 @@ public class MainUI extends javax.swing.JFrame {
     private javax.swing.JButton new_path_jButton;
     private javax.swing.JScrollPane output_jScrollPane;
     private javax.swing.JTextPane output_jTextPane;
+    private javax.swing.JComboBox<String> port_jComboBox;
     private javax.swing.JLabel remainingDominoes_jLabel;
     private javax.swing.JSpinner remainingDominoes_jSpinner;
     private javax.swing.JButton run_jButton;
@@ -379,4 +441,5 @@ public class MainUI extends javax.swing.JFrame {
     private javax.swing.JCheckBox status_jCheckBox;
     private javax.swing.JCheckBox valid_jCheckBox;
     // End of variables declaration//GEN-END:variables
+    private SerialPort serialPort;
 }
