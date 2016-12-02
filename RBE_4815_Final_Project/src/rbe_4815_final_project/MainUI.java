@@ -5,6 +5,7 @@
  */
 package rbe_4815_final_project;
 
+import java.awt.Rectangle;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
@@ -14,10 +15,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.LinkedList;
 import javax.swing.JFileChooser;
-import com.fazecast.jSerialComm.*;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import javax.swing.JOptionPane;
 
 /**
  *
@@ -43,12 +42,10 @@ public class MainUI extends javax.swing.JFrame implements WindowListener{
                      }
                  }
                 });
-        SerialPort[] serialPorts = SerialPort.getCommPorts();
-        port_jComboBox.removeAllItems();
-        for (SerialPort sp : serialPorts) {
-            port_jComboBox.addItem(sp.getSystemPortName());
-        }
-        //port_jComboBox.addItem("COM1");
+        tcpServer = new TCPServer();
+        System.setOut(new PrintStreamCapturer(output_jTextPane, System.out));
+        System.setErr(new PrintStreamCapturer(output_jTextPane, System.err, "[ERROR] "));
+        System.out.println("Click New Path then begin drawing");
     }
 
     /**
@@ -68,12 +65,10 @@ public class MainUI extends javax.swing.JFrame implements WindowListener{
         load_path_jButton = new javax.swing.JButton();
         connect_jButton = new javax.swing.JButton();
         run_jButton = new javax.swing.JButton();
-        status_jCheckBox = new javax.swing.JCheckBox();
         valid_jCheckBox = new javax.swing.JCheckBox();
         remainingDominoes_jSpinner = new javax.swing.JSpinner();
         remainingDominoes_jLabel = new javax.swing.JLabel();
         menu_jLabel2 = new javax.swing.JLabel();
-        port_jComboBox = new javax.swing.JComboBox<>();
         output_jScrollPane = new javax.swing.JScrollPane();
         output_jTextPane = new javax.swing.JTextPane();
 
@@ -180,20 +175,6 @@ public class MainUI extends javax.swing.JFrame implements WindowListener{
         gridBagConstraints.insets = new java.awt.Insets(5, 10, 5, 10);
         menu_jPanel.add(run_jButton, gridBagConstraints);
 
-        status_jCheckBox.setBackground(new java.awt.Color(51, 51, 51));
-        status_jCheckBox.setForeground(new java.awt.Color(255, 255, 255));
-        status_jCheckBox.setText("Status");
-        status_jCheckBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                status_jCheckBoxActionPerformed(evt);
-            }
-        });
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        menu_jPanel.add(status_jCheckBox, gridBagConstraints);
-
         valid_jCheckBox.setBackground(new java.awt.Color(51, 51, 51));
         valid_jCheckBox.setForeground(new java.awt.Color(255, 255, 255));
         valid_jCheckBox.setSelected(true);
@@ -206,7 +187,7 @@ public class MainUI extends javax.swing.JFrame implements WindowListener{
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridy = 1;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         menu_jPanel.add(valid_jCheckBox, gridBagConstraints);
 
@@ -242,18 +223,6 @@ public class MainUI extends javax.swing.JFrame implements WindowListener{
         gridBagConstraints.gridy = 0;
         gridBagConstraints.gridwidth = 2;
         menu_jPanel.add(menu_jLabel2, gridBagConstraints);
-
-        port_jComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        port_jComboBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                port_jComboBoxActionPerformed(evt);
-            }
-        });
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 4;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 10);
-        menu_jPanel.add(port_jComboBox, gridBagConstraints);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
@@ -313,32 +282,44 @@ public class MainUI extends javax.swing.JFrame implements WindowListener{
     }//GEN-LAST:event_new_path_jButtonActionPerformed
 
     private void run_jButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_run_jButtonActionPerformed
-        if(serialPort != null && serialPort.isOpen()) {
-            byte[] bytes = canvas_PaintJPanel.getDataForABB();
-            int result = serialPort.writeBytes(bytes, bytes.length);
-            if (result == -1) {
-                //Error
-                status_jCheckBox.setSelected(false);
-            }
+        if(!tcpServer.isConnected()){
+            System.out.println("No connection established");
+            return;
         }
+        if (canvas_PaintJPanel.getDominoes().size() <= 0){
+            System.out.println("No dominoes to transmit");
+            return;
+        }
+        System.out.println("Sending Domino Data");
+        LinkedList<Domino> pathDominoes = this.canvas_PaintJPanel.getDominoes();
+        tcpServer.writeString("PATH_START");
+
+        for(Domino d : pathDominoes) {
+            int x = d.getPosition().x;
+            int y = d.getPosition().y;
+            double angle = d.getOrientation();
+            String domino_data = x + ", " + y + ", " + angle;
+            tcpServer.writeString(domino_data);
+        }
+        tcpServer.writeString("PATH_END");
+        System.out.println("Data Sent");
     }//GEN-LAST:event_run_jButtonActionPerformed
 
     private void connect_jButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_connect_jButtonActionPerformed
-        if (serialPort != null) {
-            serialPort.closePort();
-            serialPort.setComPortParameters(9600, 8, SerialPort.ONE_STOP_BIT, SerialPort.NO_PARITY);
-            serialPort.openPort();
-            status_jCheckBox.setSelected(serialPort.isOpen());
+        System.out.println("Waiting for connection on socket " + SOCKET_NUMBER);
+        
+        tcpServer.openSocket(SOCKET_NUMBER, TCP_TIMEOUT_MS);
+        if (tcpServer.isConnected()) {
+            System.out.println("Client connected");
+        }
+        else {
+            System.out.println("Client connection failed on socket " + SOCKET_NUMBER);
         }
     }//GEN-LAST:event_connect_jButtonActionPerformed
 
     private void valid_jCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_valid_jCheckBoxActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_valid_jCheckBoxActionPerformed
-
-    private void status_jCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_status_jCheckBoxActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_status_jCheckBoxActionPerformed
   
     private void load_path_jButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_load_path_jButtonActionPerformed
         JFileChooser dirChooser = new JFileChooser();
@@ -386,15 +367,11 @@ public class MainUI extends javax.swing.JFrame implements WindowListener{
         canvas_PaintJPanel.setRemainingDominoes(remainingDominoes, false);
     }//GEN-LAST:event_remainingDominoes_jSpinnerStateChanged
 
-    private void port_jComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_port_jComboBoxActionPerformed
-
-       serialPort = SerialPort.getCommPort((String)port_jComboBox.getSelectedItem());
-    }//GEN-LAST:event_port_jComboBoxActionPerformed
-
+    
     @Override
     public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-        if(serialPort != null){
-            serialPort.closePort();
+        if (tcpServer != null) {
+            tcpServer.closeSocket();
         }
     }
     
@@ -433,13 +410,13 @@ public class MainUI extends javax.swing.JFrame implements WindowListener{
     private javax.swing.JButton new_path_jButton;
     private javax.swing.JScrollPane output_jScrollPane;
     private javax.swing.JTextPane output_jTextPane;
-    private javax.swing.JComboBox<String> port_jComboBox;
     private javax.swing.JLabel remainingDominoes_jLabel;
     private javax.swing.JSpinner remainingDominoes_jSpinner;
     private javax.swing.JButton run_jButton;
     private javax.swing.JButton save_path_jButton;
-    private javax.swing.JCheckBox status_jCheckBox;
     private javax.swing.JCheckBox valid_jCheckBox;
     // End of variables declaration//GEN-END:variables
-    private SerialPort serialPort;
+    private TCPServer tcpServer;
+    private static final int SOCKET_NUMBER = 4024;
+    private static final int TCP_TIMEOUT_MS = 30000;
 }
