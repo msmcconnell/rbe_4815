@@ -78,20 +78,21 @@ public class PaintJPanel extends javax.swing.JPanel
     public Graphics2D graphicsForDrawing;  // A graphics context for the panel
                                 // that is used to draw the user's curve.
     //Units in mm
-    private static final double DOMINO_THICKNESS = 6.35;
-    private static final double DOMINO_HEIGHT = 44.45;
-    private static final double DOMINO_WIDTH = 20.63;
-    private static final double PIXELS_PER_MM = 0.5;
-    private static final double DOMINO_PIXEL_HEIGHT = DOMINO_HEIGHT * PIXELS_PER_MM;
-    private static final double DOMINO_PIXEL_THICKNESS = DOMINO_THICKNESS * PIXELS_PER_MM;
-    private static final double DOMINO_PIXEL_WIDTH = DOMINO_WIDTH * PIXELS_PER_MM;
-    private static final int DOMINO_DISTANCE = (int)(PIXELS_PER_MM * (0.54*DOMINO_HEIGHT + 0.92*DOMINO_THICKNESS)); //d=0.54*h + 0.92*t ; h = 
+    private final double DOMINO_THICKNESS = 6.35;
+    private final double DOMINO_HEIGHT = 44.45;
+    private final double DOMINO_WIDTH = 20.63;
+    public double PIXELS_PER_MM = 0.5;
+    private final double DOMINO_PIXEL_HEIGHT = mmToPixel(DOMINO_HEIGHT);
+    private final double DOMINO_PIXEL_THICKNESS = mmToPixel(DOMINO_THICKNESS);
+    private final double DOMINO_PIXEL_WIDTH = mmToPixel(DOMINO_WIDTH);
+    private final int DOMINO_DISTANCE = mmToPixel((0.54*DOMINO_HEIGHT + 0.92*DOMINO_THICKNESS)); //d=0.54*h + 0.92*t ; h = 
+    private final int DOMINO_DISTANCE_MM = (int)(0.54*DOMINO_HEIGHT + 0.92*DOMINO_THICKNESS);
     
-    private static final int AVERAGING_SIZE = 10;
+    private final int AVERAGING_SIZE = 10;
     
-    private static final int MAX_ANGLE = 40;
+    private final int MAX_ANGLE = 40;
     
-    private static final int DEFAULT_DOMINO_COUNT = 120;
+    private final int DEFAULT_DOMINO_COUNT = 120;
     
     private boolean isValidPath = true;
     
@@ -160,7 +161,7 @@ public class PaintJPanel extends javax.swing.JPanel
             movingSumY = y;
             prevPointQueue.clear();
             prevPointQueue.add(new Point(x,y));
-            dominoQueue.add(new Domino(x, y, 0));
+            dominoQueue.add(new Domino((int) pixelToMM(x), (int) pixelToMM(y), 0));
             setUpDrawingGraphics();
             BasicStroke stroke = new BasicStroke(3);
             graphicsForDrawing.setStroke(stroke);
@@ -171,13 +172,13 @@ public class PaintJPanel extends javax.swing.JPanel
     public void drawWorkSpace(Graphics2D g) {
         int width = getWidth();
         int height = getHeight();
-        Point p1 = new Point(width - (int)(2024 * PIXELS_PER_MM), (int)(111 * PIXELS_PER_MM));
-        Point p2 = new Point(width - (int)(1960 * PIXELS_PER_MM), (int)(0 * PIXELS_PER_MM));
-        Point p3 = new Point(width - (int)(448 * PIXELS_PER_MM),  (int)(0 * PIXELS_PER_MM));
-        Point p4 = new Point(width - (int)(448 * PIXELS_PER_MM),  (int)(206 * PIXELS_PER_MM));
-        Point p5 = new Point(width - (int)(242 * PIXELS_PER_MM),  (int)(206 * PIXELS_PER_MM));
-        Point p6 = new Point(width - (int)(242 * PIXELS_PER_MM),  (int)(958 * PIXELS_PER_MM));
-        Point p7 = new Point(width - (int)(1362 * PIXELS_PER_MM), (int)(958 * PIXELS_PER_MM));
+        Point p1 = new Point(width - mmToPixel(2024), mmToPixel(111));
+        Point p2 = new Point(width - mmToPixel(1960), mmToPixel(0));
+        Point p3 = new Point(width - mmToPixel(448),  mmToPixel(0));
+        Point p4 = new Point(width - mmToPixel(448),  mmToPixel(444));
+        Point p5 = new Point(width - mmToPixel(224),  mmToPixel(448));
+        Point p6 = new Point(width - mmToPixel(224),  mmToPixel(958));
+        Point p7 = new Point(width - mmToPixel(1362), mmToPixel(958));
         g.setColor(Color.GREEN);
         BasicStroke stroke = new BasicStroke(10);
         g.setStroke(stroke);
@@ -232,7 +233,8 @@ public class PaintJPanel extends javax.swing.JPanel
 
        int x = evt.getX();   // x-coordinate of mouse.
        int y = evt.getY();   // y-coordinate of mouse.
-        
+       int xMM = (int)pixelToMM(x);
+       int yMM = (int)pixelToMM(y);
        if (dragging == false || !workSpace.contains(x,y))
           return;  // Nothing to do because the user isn't drawing.
        
@@ -257,19 +259,17 @@ public class PaintJPanel extends javax.swing.JPanel
        graphicsForDrawing.setColor(Color.BLUE);
 
        Domino prevDomino = dominoQueue.peekLast();
-       int dX = x - prevDomino.getPosition().x;
-       int dY = y - prevDomino.getPosition().y;
+       int dX = xMM - prevDomino.getPosition().x;
+       int dY = yMM - prevDomino.getPosition().y;
        
-       if (Math.sqrt((dX*dX) + (dY*dY)) >= DOMINO_DISTANCE) {
+       if (Math.sqrt((dX*dX) + (dY*dY)) >= DOMINO_DISTANCE_MM) {
            graphicsForDrawing.drawOval(x - 2, y - 2, 4, 4);
            decrementRemainingDominoes();
            if (getRemainingDominoes() <= 0) {
                dragging = false;
            }
            
-           double slope = getSlope(prevDomino.getPosition(), new Point(x, y));
-           double angle = getAngle(prevDomino.getPosition(), new Point(x, y)); //For some reason this needs to be negative
-           int b = getIntercept(slope, prevDomino.getPosition());
+           double angle = getAngle(prevDomino.getPosition(), new Point(xMM, yMM)); //For some reason this needs to be negative
            //need a get angle function here
            prevDomino.setOrientation(angle);
            if (dominoQueue.size() >= 2) {
@@ -280,12 +280,9 @@ public class PaintJPanel extends javax.swing.JPanel
                    dragging = false;
                }
            }
-           Domino newDomino = new Domino(x, y, angle);
+           Domino newDomino = new Domino(xMM, yMM, angle);
            drawDomino(prevDomino, graphicsForDrawing);
            dominoQueue.add(newDomino);
-           //Uncomment to view the normal lines of the dominos
-          // drawLineSegment(graphicsForDrawing, 15, prevDomino.getPosition(), slope, b);
-           
        }
        prevX = x;  // Get ready for the next line segment in the curve.
        prevY = y;
@@ -313,18 +310,6 @@ public class PaintJPanel extends javax.swing.JPanel
                slope = (double)dY / (double)dX;
            }
         return slope;
-    }
-
-    private int getIntercept(double slope, Point p) {
-        return p.y - (int)(slope*p.x);
-    }
-    
-    private void drawLineSegment(Graphics2D g,int width, Point middlePoint, double slope, int intercept) {
-        int xMin = middlePoint.x - width;
-        int xMax = middlePoint.x + width;
-        
-        g.setColor(Color.red);
-        g.drawLine(xMin, (int)(slope*(xMin)) + intercept, xMax, (int)(slope*(xMax)) + intercept);
     }
     
     private void setIsValidPath(boolean valid) {
@@ -361,7 +346,7 @@ public class PaintJPanel extends javax.swing.JPanel
     }
     
     public void drawDomino(Domino d, Graphics2D g) {
-        Point pos = d.getPosition();
+        Point pos = mmPointToPXPoint(d.getPosition());
         AffineTransform transform = graphicsForDrawing.getTransform();
         graphicsForDrawing.rotate(Math.toRadians(-d.getOrientation()), pos.x, pos.y);
         
@@ -378,9 +363,10 @@ public class PaintJPanel extends javax.swing.JPanel
         setUpDrawingGraphics();
         BasicStroke stroke = new BasicStroke(3);
         graphicsForDrawing.setStroke(stroke);
-        Point prevPos = dominoQueue.peekFirst().getPosition();
+        Point prevPos = mmPointToPXPoint(dominoQueue.peekFirst().getPosition());
+        
         for (Domino d : dominoQueue){
-            Point pos = d.getPosition();
+            Point pos = mmPointToPXPoint(d.getPosition());
             graphicsForDrawing.drawOval(pos.x - 2, pos.y - 2, 4, 4);
             graphicsForDrawing.setColor(Color.DARK_GRAY);
             graphicsForDrawing.drawLine(prevPos.x, prevPos.y, pos.x, pos.y);  // Draw the line.
@@ -401,6 +387,17 @@ public class PaintJPanel extends javax.swing.JPanel
                                            + (int)d.getOrientation() + "\n");
         }
         return dataString.getBytes();
+    }
+    
+    private double pixelToMM(int px){
+        return (double) px / PIXELS_PER_MM;
+    }
+    private int mmToPixel(double mm){
+        return (int) (mm * PIXELS_PER_MM);
+    }
+    
+    private Point mmPointToPXPoint(Point p) {
+        return new Point(mmToPixel(p.x), mmToPixel(p.y));
     }
     
     @Override

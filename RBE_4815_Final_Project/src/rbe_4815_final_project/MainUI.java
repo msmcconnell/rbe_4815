@@ -258,10 +258,9 @@ public class MainUI extends javax.swing.JFrame implements WindowListener{
         Integer opt = dirChooser.showSaveDialog(this);
         if (opt == JFileChooser.APPROVE_OPTION) {
             File pathFile = dirChooser.getSelectedFile();
-            try {
-                FileOutputStream outStream = new FileOutputStream(pathFile, false); // true to append
-            
-                String lines = "";
+            try (FileOutputStream outStream = new FileOutputStream(pathFile, false)) // try with outstream
+            {
+                String lines = canvas_PaintJPanel.PIXELS_PER_MM + "\n";
                 for(Domino d : pathDominoes) {
                     int x = d.getPosition().x;
                     int y = d.getPosition().y;
@@ -337,7 +336,8 @@ public class MainUI extends javax.swing.JFrame implements WindowListener{
                 String line;
              
                 br = new BufferedReader(new FileReader(pathFile));
-
+                line = br.readLine();
+                canvas_PaintJPanel.PIXELS_PER_MM = Double.parseDouble(line);
                 while ((line = br.readLine()) != null) {
                     String[] elementArray = line.split(",");
                     int x = Integer.parseInt(elementArray[0].trim());
