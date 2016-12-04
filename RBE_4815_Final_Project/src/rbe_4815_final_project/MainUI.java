@@ -292,15 +292,25 @@ public class MainUI extends javax.swing.JFrame implements WindowListener{
         System.out.println("Sending Domino Data");
         LinkedList<Domino> pathDominoes = this.canvas_PaintJPanel.getDominoes();
         tcpServer.writeString("PATH_START");
-
+        
+        //sleepThread(1000);
+        
+        tcpServer.writeString(Integer.toString((int)canvas_PaintJPanel.pixelToMM(canvas_PaintJPanel.getWidth())));
+        int widthMM = (int)canvas_PaintJPanel.pixelToMM(canvas_PaintJPanel.getWidth());
+        //sleepThread(1000);
         for(Domino d : pathDominoes) {
+//            int x = d.getPosition().y;
+//            int y =  -(widthMM - d.getPosition().x);
             int x = d.getPosition().x;
             int y = d.getPosition().y;
-            double angle = d.getOrientation();
-            String domino_data = x + ", " + y + ", " + angle;
+
+            int angle = (int) d.getOrientation();
+            String domino_data = x + "," + y + "," + angle;
+            
             tcpServer.writeString(domino_data);
+            //sleepThread(1000);
         }
-        tcpServer.writeString("PATH_END");
+        //tcpServer.writeString("PATH_END");
         System.out.println("Data Sent");
     }//GEN-LAST:event_run_jButtonActionPerformed
 
@@ -367,6 +377,15 @@ public class MainUI extends javax.swing.JFrame implements WindowListener{
         canvas_PaintJPanel.setRemainingDominoes(remainingDominoes, false);
     }//GEN-LAST:event_remainingDominoes_jSpinnerStateChanged
 
+    private void sleepThread(int ms){
+        try{
+            Thread.sleep(ms);
+        } catch (Exception e){
+            System.out.println("Sleep Interupted");
+        }
+        
+    }
+    
     
     @Override
     public void windowClosing(java.awt.event.WindowEvent windowEvent) {

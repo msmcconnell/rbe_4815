@@ -389,10 +389,10 @@ public class PaintJPanel extends javax.swing.JPanel
         return dataString.getBytes();
     }
     
-    private double pixelToMM(int px){
+    public double pixelToMM(int px){
         return (double) px / PIXELS_PER_MM;
     }
-    private int mmToPixel(double mm){
+    public int mmToPixel(double mm){
         return (int) (mm * PIXELS_PER_MM);
     }
     
