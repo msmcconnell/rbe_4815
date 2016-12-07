@@ -172,19 +172,20 @@ public class PaintJPanel extends javax.swing.JPanel
     public void drawWorkSpace(Graphics2D g) {
         int width = getWidth();
         int height = getHeight();
-        Point p1 = new Point(width - mmToPixel(2024), mmToPixel(111));
-        Point p2 = new Point(width - mmToPixel(1960), mmToPixel(0));
+        //Point p1 = new Point(width - mmToPixel(2024), mmToPixel(111));
+        Point p2 = new Point(width - mmToPixel(1150), mmToPixel(0));
         Point p3 = new Point(width - mmToPixel(448),  mmToPixel(0));
         Point p4 = new Point(width - mmToPixel(448),  mmToPixel(444));
         Point p5 = new Point(width - mmToPixel(224),  mmToPixel(448));
         Point p6 = new Point(width - mmToPixel(224),  mmToPixel(958));
-        Point p7 = new Point(width - mmToPixel(1362), mmToPixel(958));
+        Point p7 = new Point(width - mmToPixel(1150), mmToPixel(958));
         g.setColor(Color.GREEN);
         BasicStroke stroke = new BasicStroke(10);
         g.setStroke(stroke);
-        int[] xPoints = {p1.x, p2.x, p3.x, p4.x, p5.x, p6.x, p7.x};
-        int[] yPoints = {p1.y, p2.y, p3.y, p4.y, p5.y, p6.y, p7.y};
-        workSpace = new Polygon(xPoints, yPoints, 7);
+        int[] xPoints = {p2.x, p3.x, p4.x, p5.x, p6.x, p7.x};
+        int[] yPoints = {p2.y, p3.y, p4.y, p5.y, p6.y, p7.y};
+        workSpace = new Polygon(xPoints, yPoints, 6);
+        g.drawOval(width - 1, 0, 1150, 1150);
         g.drawPolygon(workSpace);
         
     }
@@ -269,7 +270,7 @@ public class PaintJPanel extends javax.swing.JPanel
                dragging = false;
            }
            
-           double angle = getAngle(prevDomino.getPosition(), new Point(xMM, yMM)); //For some reason this needs to be negative
+           double angle = getAngle(prevDomino.getPosition(), new Point(xMM, yMM));
            //need a get angle function here
            prevDomino.setOrientation(angle);
            if (dominoQueue.size() >= 2) {
